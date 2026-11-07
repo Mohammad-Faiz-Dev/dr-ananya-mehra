@@ -5,9 +5,15 @@
 @tailwind utilities;
 
 body {
-  @apply bg-white text-slate font-sans text-lg leading-relaxed;
+  @apply bg-ivory text-slate font-sans text-lg leading-relaxed;
+  background-color: #F7F4EF;
 }
 
 h1, h2, h3, h4 {
-  @apply font-serif;
+  @apply font-serif text-teal;
+}
+
+:focus-visible {
+  outline: 2px solid #0F766E;
+  outline-offset: 2px;
 }

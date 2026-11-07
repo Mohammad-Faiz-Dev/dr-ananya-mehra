@@ -8,13 +8,11 @@ module.exports = {
         mint: '#ECFDF5',
         coral: '#F97360',
         slate: '#1E293B',
+        ivory: '#F7F4EF',
       },
       fontFamily: {
         serif: ['"DM Serif Display"', 'serif'],
         sans: ['Inter', 'system-ui', 'sans-serif'],
-      },
-      fontSize: {
-        base: '18px',
       },
     },
   },
