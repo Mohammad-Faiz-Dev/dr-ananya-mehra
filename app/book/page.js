@@ -4,13 +4,11 @@ import { useState, useRef } from 'react';
 import Link from 'next/link';
 
 const treatments = ['Heart Check-up', 'ECG & Echo', 'Hypertension', 'Heart Failure', 'Preventive Cardiology', 'Second Opinion'];
-
 const demoSlots = ['9:00 AM', '10:30 AM', '12:00 PM', '3:00 PM', '4:30 PM', '5:30 PM'];
 
 function isValidEmail(v) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 }
-
 function isValidPhone(v) {
   const digits = v.replace(/[\s\-+()]/g, '');
   return digits.length >= 8 && digits.length <= 15;
@@ -28,6 +26,8 @@ export default function BookPage() {
   const [errors, setErrors] = useState({});
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [serverError, setServerError] = useState('');
+  const [reference, setReference] = useState('');
   const firstErrorRef = useRef(null);
 
   const today = new Date().toISOString().split('T')[0];
@@ -50,28 +50,45 @@ export default function BookPage() {
     setErrors((e) => ({ ...e, date: undefined, time: undefined }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (submitting) return;
+    setServerError('');
     if (!validate()) {
       setTimeout(() => firstErrorRef.current?.focus(), 50);
       return;
     }
     setSubmitting(true);
-    setTimeout(() => {
+    try {
+      const res = await fetch('/api/book', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        setServerError(data.error || 'Could not process the request. Please try again.');
+        if (data.errors) setErrors(data.errors);
+        setSubmitting(false);
+        return;
+      }
+      setReference(data.reference);
       setSubmitted(true);
+    } catch {
+      setServerError('Network error. Please try again.');
+    } finally {
       setSubmitting(false);
-    }, 400);
+    }
   };
 
   if (submitted) {
     return (
       <div className="pt-10 pb-24 px-4 max-w-2xl mx-auto">
         <div className="bg-mint rounded-2xl p-8 text-center">
-          <h1 className="text-3xl font-serif text-teal mb-4">Demo request preview</h1>
-          <p className="mb-2"><strong>No appointment has been booked or sent.</strong></p>
+          <h1 className="text-3xl font-serif text-teal mb-4">Demo request received</h1>
+          <p className="mb-2"><strong>Reference: {reference}</strong></p>
           <p className="text-sm opacity-80 mb-6">
-            This is a frontend preview only. Nothing was stored, emailed, or shared with a clinic.
+            No appointment has been booked or sent. This was processed by a serverless API route on Vercel.
           </p>
           <div className="text-left bg-white rounded-xl p-4 text-sm space-y-1 mb-6">
             <div><strong>Type:</strong> {form.treatment}</div>
@@ -90,18 +107,13 @@ export default function BookPage() {
   return (
     <div className="pt-10 pb-24 px-4 max-w-2xl mx-auto">
       <h1 className="text-4xl font-serif text-teal mb-2">Book a consultation</h1>
-      <p className="mb-2 opacity-70">Preview a booking request. Illustrative slots only.</p>
-      <p className="text-sm text-slate/60 mb-8">This form does not create a real appointment.</p>
+      <p className="mb-2 opacity-70">Submit a demo booking request. Illustrative slots only.</p>
+      <p className="text-sm text-slate/60 mb-8">Processed by a Vercel serverless function. No real appointment is created.</p>
 
       <form onSubmit={handleSubmit} noValidate className="space-y-6">
         <div>
           <label htmlFor="treatment" className="block mb-1 font-medium">Consultation type</label>
-          <select
-            id="treatment"
-            value={form.treatment}
-            onChange={(e) => setForm({ ...form, treatment: e.target.value })}
-            className="w-full border rounded-xl p-3"
-          >
+          <select id="treatment" value={form.treatment} onChange={(e) => setForm({ ...form, treatment: e.target.value })} className="w-full border rounded-xl p-3">
             {treatments.map((t) => <option key={t}>{t}</option>)}
           </select>
           {errors.treatment && <p className="text-coral text-sm mt-1">{errors.treatment}</p>}
@@ -109,15 +121,7 @@ export default function BookPage() {
 
         <div>
           <label htmlFor="date" className="block mb-1 font-medium">Preferred date</label>
-          <input
-            id="date"
-            type="date"
-            min={today}
-            value={form.date}
-            onChange={(e) => handleDateChange(e.target.value)}
-            className="w-full border rounded-xl p-3"
-            ref={errors.date ? firstErrorRef : null}
-          />
+          <input id="date" type="date" min={today} value={form.date} onChange={(e) => handleDateChange(e.target.value)} className="w-full border rounded-xl p-3" ref={errors.date ? firstErrorRef : null} />
           {errors.date && <p className="text-coral text-sm mt-1">{errors.date}</p>}
         </div>
 
@@ -127,12 +131,7 @@ export default function BookPage() {
             <p className="text-xs opacity-60 mb-2">Illustrative times for Mon–Sat. Not a live calendar.</p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {demoSlots.map((t) => (
-                <button
-                  type="button"
-                  key={t}
-                  onClick={() => setForm({ ...form, time: t })}
-                  className={`border rounded-xl p-3 text-sm ${form.time === t ? 'bg-teal text-white' : 'hover:bg-mint'}`}
-                >
+                <button type="button" key={t} onClick={() => setForm({ ...form, time: t })} className={`border rounded-xl p-3 text-sm ${form.time === t ? 'bg-teal text-white' : 'hover:bg-mint'}`}>
                   {t}
                 </button>
               ))}
@@ -143,40 +142,19 @@ export default function BookPage() {
 
         <div>
           <label htmlFor="name" className="block mb-1 font-medium">Full name</label>
-          <input
-            id="name"
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-            className="w-full border rounded-xl p-3"
-            ref={errors.name ? firstErrorRef : null}
-          />
+          <input id="name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full border rounded-xl p-3" ref={errors.name ? firstErrorRef : null} />
           {errors.name && <p className="text-coral text-sm mt-1">{errors.name}</p>}
         </div>
 
         <div>
           <label htmlFor="email" className="block mb-1 font-medium">Email</label>
-          <input
-            id="email"
-            type="email"
-            value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
-            className="w-full border rounded-xl p-3"
-            ref={errors.email ? firstErrorRef : null}
-          />
+          <input id="email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="w-full border rounded-xl p-3" ref={errors.email ? firstErrorRef : null} />
           {errors.email && <p className="text-coral text-sm mt-1">{errors.email}</p>}
         </div>
 
         <div>
           <label htmlFor="phone" className="block mb-1 font-medium">Phone</label>
-          <input
-            id="phone"
-            type="tel"
-            placeholder="+91 or international"
-            value={form.phone}
-            onChange={(e) => setForm({ ...form, phone: e.target.value })}
-            className="w-full border rounded-xl p-3"
-            ref={errors.phone ? firstErrorRef : null}
-          />
+          <input id="phone" type="tel" placeholder="+91 or international" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="w-full border rounded-xl p-3" ref={errors.phone ? firstErrorRef : null} />
           {errors.phone && <p className="text-coral text-sm mt-1">{errors.phone}</p>}
         </div>
 
@@ -188,12 +166,10 @@ export default function BookPage() {
           </div>
         )}
 
-        <button
-          type="submit"
-          disabled={submitting}
-          className="w-full bg-coral text-white py-4 rounded-full font-medium disabled:opacity-60"
-        >
-          {submitting ? 'Preparing preview…' : 'Preview booking request'}
+        {serverError && <p className="text-coral text-sm">{serverError}</p>}
+
+        <button type="submit" disabled={submitting} className="w-full bg-coral text-white py-4 rounded-full font-medium disabled:opacity-60">
+          {submitting ? 'Sending request…' : 'Submit demo request'}
         </button>
       </form>
     </div>
