@@ -12,25 +12,25 @@ export default function TreatmentPage({ params }) {
 
   return (
     <div className="pt-10 pb-20 px-4 max-w-3xl mx-auto">
+      <p className="text-sm uppercase tracking-widest text-teal/70 mb-2">Illustrative page</p>
       <h1 className="text-4xl font-serif text-teal mb-4">{title}</h1>
-      <p className="text-lg mb-8">A clear, evidence-based approach tailored to your condition. We explain every step so you feel informed and reassured.</p>
+      <p className="text-lg mb-6">A clear overview of what a consultation typically involves. This page does not provide personalised medical advice or promise outcomes.</p>
 
       <section className="mb-8">
-        <h2 className="text-2xl font-serif mb-3">Overview</h2>
-        <p>Comprehensive evaluation using modern diagnostics followed by a personalised treatment plan.</p>
-      </section>
-
-      <section className="mb-8">
-        <h2 className="text-2xl font-serif mb-3">What to expect</h2>
+        <h2 className="text-2xl font-serif mb-3">What is usually discussed</h2>
         <ul className="list-disc pl-5 space-y-1">
-          <li>Detailed history and examination</li>
-          <li>Relevant investigations (ECG, Echo, blood work)</li>
-          <li>Clear explanation of findings</li>
-          <li>Follow-up schedule</li>
+          <li>Your symptoms and relevant history</li>
+          <li>Which investigations may be useful</li>
+          <li>How findings are explained</li>
+          <li>Possible next steps</li>
         </ul>
       </section>
 
-      <Link href="/book" className="inline-block bg-coral text-white px-8 py-4 rounded-full">Book this treatment</Link>
+      <div className="bg-mint rounded-2xl p-6 text-sm mb-8">
+        This is a fictional demo. It is not for emergencies and does not replace a real consultation.
+      </div>
+
+      <Link href="/book" className="inline-block bg-coral text-white px-8 py-4 rounded-full">Preview a booking request</Link>
     </div>
   );
 }
